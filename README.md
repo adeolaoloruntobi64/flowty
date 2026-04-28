@@ -18,7 +18,10 @@ Flow Free is a logic puzzle played on a grid. The goal is to connect matching co
 
 ## 👀 See It In Action
 
-[![Watch the video]](https://raw.githubusercontent.com/adeolaoloruntobi64/flowty/master/boards/vid.mp4)
+https://github.com/user-attachments/assets/a3d800e5-cfc9-4cbe-8e99-40db1801adc2
+
+https://github.com/user-attachments/assets/bf0d4178-fe71-4b5d-81ed-b0d3d2846426
+
 
 ## 🙏 Acknowledgements
 
