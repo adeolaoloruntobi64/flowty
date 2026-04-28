@@ -1,0 +1,8 @@
+[env]
+LIBCLANG_PATH="C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/VC/Tools/Llvm/x64/bin"
+OPENCV_LINK_LIBS="opencv_world4130"
+OPENCV_LINK_PATHS="C:/Users/hocuspocus/open-cv/x64/vc18/lib"
+OPENCV_INCLUDE_PATHS="C:/Users/hocuspocus/open-cv/include"
+
+[build]
+rustflags = ["-Clink-arg=/DEBUG:NONE"]

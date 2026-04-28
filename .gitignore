@@ -1,0 +1,4 @@
+/target
+/.cargo/config.toml
+/superdetect/models/yolo26n-seg.pt
+/superdetect/models/yolo26s-seg.pt
