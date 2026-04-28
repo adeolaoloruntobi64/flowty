@@ -16,6 +16,10 @@ Flow Free is a logic puzzle played on a grid. The goal is to connect matching co
 - ✅ **Valid solution generation**: Ensures all Flow Free rules are satisfied
 - 🖥️ **Visualization support**: Draws the solution in game
 
+## 👀 See It In Action
+
+[![Watch the video]](https://raw.githubusercontent.com/adeolaoloruntobi64/flowty/master/boards/vid.mp4)
+
 ## 🙏 Acknowledgements
 
 - Inspired by the Flow puzzle concept
@@ -38,10 +42,10 @@ And some additional links
 - https://www.youtube.com/watch?v=XU4Xk_zg9jI
 - https://www.samueltgoldman.com/post/flow-solver/
 
-## Grievances
+## 🥺 Grievances
 I have been working on this project over the span of 6 months. 95% of the time I spent programming was on the image recognition. I wanted it to support every type of flow level imaginable, however, after 3 months of trying, I decided to take a break and instead learn about boolean satisfiability and how I can use it, as well as the screen capturing and input automation. All of that took me less than 24 hours (total time spent). Seeing this, I was certain that soon enough, I would finally perfect the image recognition. So I installed gimp, made some gimp plugins, used decision trees to try and find a connection, tried plotting to see if I could see a pattern, learned some color theory; But that moment never came. After another 3 months, I decided to forget about solving warps or under/overpasses or bridges, and just focus on the base game, flow free, and a continuation, flow shapes. Currently, It can solve non-uniform split boards with varying cell sizes, and chains, and walls. It can sometimes solve windmills. Flow makes the endpoints of lines dim sometimes which messes up the recognition. If you are interested in seeing the history of my image recognition algorithm, You can go to /dichromate/saves, /scripts, and /semilogs.md in the initial commit. I'm not sure I'll keep them. Also the dataset of 417 is not completely representative of the whole game. I noticed some kind of long bring structure by accident after I made the dataset.
 
-## Interesting Note
+## 🤔 Interesting Note
 I tested this on the flow free app for windows and my solver found a solution that didn't use every cell
 
 ![Non Unique](boards/non-unique.png "Non Unique Board")

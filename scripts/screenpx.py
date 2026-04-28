@@ -26,10 +26,7 @@ def take_screenshot():
 
     print(f"Saved: {filepath}")
 
-# bind keys
+
 keyboard.add_hotkey("F8", take_screenshot)
-
 print("Running... Press F8 to capture, F9 to quit.")
-
-# keep program alive
 keyboard.wait()
