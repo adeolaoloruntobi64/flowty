@@ -279,8 +279,6 @@ impl CellDetector for OpenCVCellDetector {
             self.border_value,
         )?;
         bitwise_or_def(&self.temp_mat, &self.blob_mat, &mut self.write_mat)?;
-        //opencv::imgcodecs::imwrite_def("dichromate/pics2/U1.png", &self.write_mat).unwrap();
-        //opencv::imgcodecs::imwrite_def("dichromate/pics2/U3.png", bit_mat).unwrap();
         let mut contours = Vector::<Vector::<Point>>::new();
         // get the contours of the processed image
         find_contours(
@@ -349,7 +347,6 @@ impl CellDetector for OpenCVCellDetector {
             if hsv_color[2] < 127 {
                 cell_color = Vec3b::from_array([0, 0, 0]);
             }
-            // Expanding the bounding box for ROI: (semilogs)
             let mut bbox = bounding_rect(&contour)?;
             bbox.x -= 2 * (1 + DILATION_PIXELS);
             bbox.y -= 2 * (1 + DILATION_PIXELS);
@@ -366,8 +363,6 @@ impl CellDetector for OpenCVCellDetector {
                 false
             ))));
         }
-        // Edge dilation adjacency check: (semilogs)
-        // Look for alternative
         for i in 0..cells.len() {
             for j in (i + 1)..cells.len() {
                 // We know for sure they won't be the same cell as j != i
@@ -553,16 +548,14 @@ impl CellDetector for OpenCVCellDetector {
             self.affiliation_displays.push(*color);
             cells[arr[0].0].borrow_mut().affiliation = i + 1;
             cells[arr[1].0].borrow_mut().affiliation = i + 1;
-            //println!("CELLS {:?} and {:?} HAVE: {}", cells[arr[0].0].borrow().center, cells[arr[1].0].borrow().center, i + 1);
         }
-        //println!("{:?}", self.affiliation_displays);
 
         // 4 times is probably a good estimate
         let mut graph = UnGraphMap::<GraphCell, GraphEdge>::with_capacity(
             cells.len(),
             4 * cells.len()
         );
-        //let mut r = bit_mat.clone();
+        
         for cell in &cells {
             let cell = cell.borrow();
             if cell.is_fake { continue }
@@ -574,16 +567,6 @@ impl CellDetector for OpenCVCellDetector {
                 GraphCellHint::Empty, cell.affiliation, clocation
             );
             graph.add_node(gcell);
-            //if cell.affiliation != 0 {
-            //circle(
-            //    &mut r,
-            //    cell.center,
-            //    7,
-            //    Scalar::new(255., 215., 125., 255.),
-            //    1,
-            //    LINE_8,
-            //    0
-            //)?;}
             for neighbor in &cell.neighbors {
                 let neighbor = neighbor.borrow();
                 if neighbor.is_fake { continue }
@@ -595,28 +578,9 @@ impl CellDetector for OpenCVCellDetector {
                     GraphCellHint::Empty, neighbor.affiliation, nlocation
                 );
                 graph.add_node(gneighbor);
-                let a = graph.add_edge(gcell, gneighbor, GraphEdge { affiliation: 0 });
-                //if a.is_none() {
-                //    line(
-                //        &mut r,
-                //        cell.center,
-                //        neighbor.center,
-                //        Scalar::new(255., 255., 255., 255.),
-                //        3,
-                //        LINE_8,
-                //        0,
-                //    )?;
-                //}
+                graph.add_edge(gcell, gneighbor, GraphEdge { affiliation: 0 });
             }
         }
-        //opencv::imgcodecs::imwrite_def("dichromate/pics2/U2.png", &r).unwrap();
-        //let t = (0..=9).map(|x| graph
-        //    .nodes()
-        //    .filter(|n| {
-        //        n.affiliation == x
-        //    }).count()
-        //).collect::<Vec<_>>();
-        //println!("{}, {}, {:?}", graph.node_count(), graph.edge_count(), t);
         return Ok(graph);
     }
 }

@@ -14,10 +14,7 @@ fn main() {
 	let io = FlowIO::new_monitor(monitor, engine, region);
 	let detector = OpenCVCellDetector::new().unwrap();
 	let mut flowty = Flowty::<_, Glucose>::new(io, detector);
-	//std::thread::sleep(std::time::Duration::from_secs(3));
 	// flowty.step(Duration::from_millis(20)).unwrap();
-	// Flow free shapes party pack lvl 53
-	// Flow free bridges variery pack lvl 10
 	flowty.timed_trial(
 		Duration::from_mins(10),
 		Duration::from_millis(1250),

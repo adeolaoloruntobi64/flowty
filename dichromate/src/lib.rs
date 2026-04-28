@@ -1,4 +1,3 @@
-pub mod puzzle;
 pub mod instr;
 pub mod flowio;
 pub mod flowty;
