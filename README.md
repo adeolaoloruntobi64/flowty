@@ -27,7 +27,7 @@ https://github.com/user-attachments/assets/bf0d4178-fe71-4b5d-81ed-b0d3d2846426
 
 - Inspired by the Flow puzzle concept
 - Uses [xcap](https://github.com/nashaofu/xcap) to capture the screen
-- Uses [OpenCV-rust](https://github.com/twistedfall/opencv-rust) for image processing, specifically the rust port,
+- Uses [OpenCV-rust](https://github.com/twistedfall/opencv-rust) for image processing
 - Uses [RustSat](https://github.com/chrjabs/rustsat) for SAT solving,
 - Uses [Engio](https://github.com/enigo-rs/enigo) for mouse input
 - Uses [Spin-Sleep](https://github.com/alexheretic/spin-sleep) for proper timing

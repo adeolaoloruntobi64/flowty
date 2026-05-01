@@ -14,8 +14,8 @@ pub struct InstructionLinesIterator<T: Iterator<Item = Instruction>> {
     prev: Option<Coordinates>
 }
 
-impl<T> Iterator for InstructionLinesIterator<T> 
-where 
+impl<T> Iterator for InstructionLinesIterator<T>
+where
     T: Iterator<Item = Instruction> {
     type Item = (Coordinates, Coordinates);
 
@@ -24,11 +24,10 @@ where
             match instr {
                 Instruction::Hold => self.held = true,
                 Instruction::Goto(b) => {
-                    let keep = self.prev;
-                    self.prev = Some(b);
-                    let Some(a) = keep else { continue };
-                    if !self.held { continue }
-                    return Some((a, b));
+                    match (self.prev.replace(b), self.held) {
+                        (Some(a), true) => return Some((a, b)),
+                        _ => continue
+                    }
                 },
                 Instruction::Release => { self.held = false; self.prev = None },
             };
@@ -44,11 +43,13 @@ impl Instruction {
         affs: &Vec<Vec3b>
     ) -> Vec<Self> {
         let mut instructions = Vec::new();
-
+        // To Do: For chain levels, don't go in order of detected affiliations.
+        // find a way to solve the board in one grab. We can technically solve
+        // chain puzzles, but on levels where the chain animation is long, not
+        // going in order stops the app from accepting mouse movement temporarily
         for aff in 1..=affs.len() {
             Self::emit_path(solved, aff, &mut instructions, affs);
         }
-
         instructions
     }
 
@@ -89,7 +90,7 @@ impl Instruction {
         };
         out.push(Instruction::Goto(current.location));
         out.push(Instruction::Hold);
-        
+
         // 3. Walk the path
         loop {
             let next = get_next(current, prev);

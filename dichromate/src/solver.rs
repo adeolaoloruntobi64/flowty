@@ -8,7 +8,7 @@ use itertools::Itertools;
 use petgraph::graphmap::{NodeTrait, UnGraphMap};
 use rustsat::encodings::am1::{Encode, Ladder};
 use unordered_pair::UnorderedPair;
-use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var};
+use rustsat::types::{Assignment, Clause, TernaryVal, Var};
 use rustsat::instances::{BasicVarManager, Cnf};
 use rustsat::solvers::{Solve, SolveStats, SolverResult};
 
@@ -189,7 +189,7 @@ where
             } else {
                 // V must have nonzero affiliation
                 cnf.add_clause(Clause::from([self.affiliation_var(HasAffiliation::from_node(vertex), 0).neg_lit()]));
-            
+
                 // V has only one affiliation
                 let vars = self.valid_non_null_affiliations()
                     .map(|aff| self.affiliation_var(HasAffiliation::from_node(vertex), aff).pos_lit())
@@ -200,14 +200,12 @@ where
 
                 let all_incident = self.graph.edges(vertex).collect_vec();
                 for aff in self.valid_non_null_affiliations() {
-                    {
-                        let mut terms = Vec::with_capacity(1 + all_incident.len());
-                        terms.push(self.affiliation_var(HasAffiliation::from_node(vertex), aff).neg_lit());
-                        terms.extend(all_incident.iter()
-                            .map(|e_triple| self.affiliation_var(HasAffiliation::from_edge(*e_triple), aff).pos_lit())
-                        );
-                        cnf.add_clause(Clause::from(terms.as_slice()));
-                    }
+                    let mut terms = Vec::with_capacity(1 + all_incident.len());
+                    terms.push(self.affiliation_var(HasAffiliation::from_node(vertex), aff).neg_lit());
+                    terms.extend(all_incident.iter()
+                        .map(|e_triple| self.affiliation_var(HasAffiliation::from_edge(*e_triple), aff).pos_lit())
+                    );
+                    cnf.add_clause(Clause::from(terms.as_slice()));
 
                     for clause in all_incident.iter().map(|e1_triple| {
                         all_incident.iter()
@@ -312,6 +310,7 @@ impl Coordinates {
     }
 }
 
+// Use in future maybe when I can support them
 #[derive(Debug, Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum GraphCellHint {
     Phantom, // Used for extreme alley,
@@ -367,27 +366,25 @@ impl ArbitraryGraphSolver {
     pub fn solve<T: Default + Solve + SolveStats>(&self) -> Result<UnGraphMap<GraphCell, GraphEdge>, SolverFailure> {
         let solver = GraphSolver::<_, _, T>::from((&self.graph, self.max_affiliation));
         let solution = solver.solve()?;
-
         let mut solved_graph = UnGraphMap::with_capacity(self.graph.node_count(), self.graph.edge_count());
+        let mut node_map= HashMap::with_capacity(self.graph.node_count());
+
         for node in self.graph.nodes() {
-            let mut new_node = node.clone();
+            let mut new_node = node;
             if node.affiliation == 0 {
                 new_node.affiliation = *solution.get(&HasAffiliation::from_node(node)).unwrap();
             }
-            // existing Terminus and path cells can stay as is
             solved_graph.add_node(new_node);
+            node_map.insert(new_node.location, new_node);
         }
 
-        for triple in self.graph.all_edges() {
-            let (n1, n2, e) = triple;
-
+        for (n1, n2, e) in self.graph.all_edges() {
             let mut new_e = *e;
-            new_e.affiliation = *solution.get(&HasAffiliation::from_edge(triple)).unwrap();
-
+            new_e.affiliation = *solution.get(&HasAffiliation::from_edge((n1, n2, e))).unwrap();
             solved_graph.add_edge(
-                solved_graph.nodes().find(|n| n.location == n1.location).unwrap(),
-                solved_graph.nodes().find(|n| n.location == n2.location).unwrap(),
-                new_e
+                node_map[&n1.location],
+                node_map[&n2.location],
+                new_e,
             );
         }
 

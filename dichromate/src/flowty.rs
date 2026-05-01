@@ -9,7 +9,7 @@ use xcap::XCapError;
 
 use crate::{detectors::CellDetector, flowio::FlowIO, instr::Instruction, solver::{ArbitraryGraphSolver, Coordinates, SolverFailure}};
 
-pub fn image_buffer_to_mat(img: ImageBuffer<Rgba<u8>, Vec<u8>>) -> Mat {
+pub fn image_buffer_to_mat(img: &ImageBuffer<Rgba<u8>, Vec<u8>>) -> Mat {
     let (width, height) = img.dimensions();
     let mut ret = Mat::default();
      let mat = unsafe {
@@ -57,9 +57,9 @@ impl<D: CellDetector, T: Default + Solve + SolveStats> Flowty<D, T> {
     // connect and let go, there's an animation that plays and it
     // doesn't let you move aything else (chain maze and chain puzzles)
     pub fn timed_trial(
-        &mut self, 
-        trial_time: Duration, 
-        new_board_delay: Duration, 
+        &mut self,
+        trial_time: Duration,
+        new_board_delay: Duration,
         update_interval: Duration,
         next_level_pos: Option<(usize, usize)>
     ) -> Result<(), FlowtyError> {
@@ -85,9 +85,7 @@ impl<D: CellDetector, T: Default + Solve + SolveStats> Flowty<D, T> {
         Ok(())
     }
 
-    pub fn step(&mut self, interval: Duration) -> Result<(), FlowtyError> {
-        let img = self.io.capture().map_err(FlowtyError::XCap)?;
-        let mat = image_buffer_to_mat(img);
+    pub fn mat_to_instr(&mut self, mat: &Mat) -> Result<Vec<Instruction>, FlowtyError> {
         let graph = self.detector
             .detect_cells(&mat, true)
             .map_err(FlowtyError::OpenCV)?;
@@ -98,6 +96,13 @@ impl<D: CellDetector, T: Default + Solve + SolveStats> Flowty<D, T> {
             &solved,
             self.detector.get_affiliations()
         );
+        Ok(instructions)
+    }
+
+    pub fn step(&mut self, interval: Duration) -> Result<(), FlowtyError> {
+        let img = self.io.capture().map_err(FlowtyError::XCap)?;
+        let mat = image_buffer_to_mat(&img);
+        let instructions = self.mat_to_instr(&mat)?;
         self.io.execute(&instructions, interval).map_err(FlowtyError::Enigo)?;
         Ok(())
     }
@@ -106,13 +111,13 @@ impl<D: CellDetector, T: Default + Solve + SolveStats> Flowty<D, T> {
         &mut self,
         pic: ImageBuffer<Rgba<u8>, Vec<u8>>
     ) -> Result<ImageBuffer<Rgba<u8>, Vec<u8>>, FlowtyError> {
-        let mat = image_buffer_to_mat(pic);
+        let mat = image_buffer_to_mat(&pic);
         let processed = self.process_mat(mat)?;
         let mut rgba = Mat::default();
         imgproc::cvt_color(
             &processed,
             &mut rgba,
-            imgproc::COLOR_RGBA2BGR,
+            imgproc::COLOR_BGR2RGBA,
             0,
             opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT
         ).unwrap();
@@ -121,16 +126,7 @@ impl<D: CellDetector, T: Default + Solve + SolveStats> Flowty<D, T> {
     }
 
     pub fn process_mat(&mut self, mut mat: Mat) -> Result<Mat, FlowtyError> {
-        let graph = self.detector
-            .detect_cells(&mat, true)
-            .map_err(FlowtyError::OpenCV)?;
-        let solved = ArbitraryGraphSolver::new(graph, None)
-            .solve::<T>()
-            .map_err(FlowtyError::Solver)?;
-        let instructions = Instruction::create_vec_from_solved(
-            &solved,
-            self.detector.get_affiliations()
-        );
+        let instructions = self.mat_to_instr(&mat)?;
         for (from, to) in Instruction::to_lines_iter(instructions) {
             imgproc::line(
                 &mut mat,

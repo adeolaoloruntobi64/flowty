@@ -18,7 +18,7 @@ fn main() {
 	flowty.timed_trial(
 		Duration::from_mins(10),
 		Duration::from_millis(1250),
-		Duration::from_millis(25),
+		Duration::from_millis(15),
 		Some((2380 - 1734, 857 - 73))
 	).unwrap();
 }

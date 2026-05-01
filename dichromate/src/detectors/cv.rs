@@ -1,11 +1,7 @@
-use std::{cell::RefCell, collections::VecDeque, f64::consts::PI, rc::Rc};
-use itertools::Itertools;
-use opencv::{
-    core::*, *, imgproc::*
-};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+use opencv::{core::*, imgproc::*};
 use crate::{detectors::{CellDetector, SupportedFeatures}, solver::{Coordinates, GraphCell, GraphCellHint, GraphEdge}};
 use petgraph::prelude::UnGraphMap;
-use rayon::prelude::*;
 
 const DILATION_PIXELS: i32 = 4;
 
@@ -76,7 +72,7 @@ impl Cell {
         this.borrow().closeby.iter()
             .any(|c| Rc::ptr_eq(&c, closeby))
     }
-    
+
     pub fn add_neighbor(this: &Rc<RefCell<Cell>>, neighbor: &Rc<RefCell<Cell>>) {
         if Self::are_same(this, neighbor)
         || Self::are_neighbors(this, neighbor) {
@@ -98,7 +94,7 @@ impl Cell {
 
 fn distance_between(a: &Point, b: &Point) -> f64 {
     return (
-        (a.x - b.x).pow(2) as f64 + 
+        (a.x - b.x).pow(2) as f64 +
         (a.y - b.y).pow(2) as f64
     ).sqrt()
 }
@@ -121,7 +117,6 @@ pub struct OpenCVCellDetector {
     temp_mat: Mat,
     blob_mat: Mat,
     thresh_mat: Mat,
-    colorthresh_mat: Mat,
     hsvthresh_mat: Mat,
     and_mat: Mat,
     dilated_mat: Mat,
@@ -138,10 +133,9 @@ impl OpenCVCellDetector {
         Ok(Self {
             hsv_mat: Mat::default(),
             write_mat: Mat::default(),
-            temp_mat: Mat::default(), 
+            temp_mat: Mat::default(),
             blob_mat: Mat::default(),
             thresh_mat: Mat::default(),
-            colorthresh_mat: Mat::default(),
             hsvthresh_mat: Mat::default(),
             and_mat: Mat::default(),
             dilated_mat: Mat::default(),
@@ -182,7 +176,6 @@ impl OpenCVCellDetector {
         self.temp_mat.set_scalar(0.into())?;
         self.blob_mat.set_scalar(0.into())?;
         self.thresh_mat.set_scalar(0.into())?;
-        self.colorthresh_mat.set_scalar(0.into())?;
         self.hsvthresh_mat.set_scalar(0.into())?;
         self.and_mat.set_scalar(0.into())?;
         self.dilated_mat.set_scalar(0.into())?;
@@ -209,7 +202,7 @@ impl CellDetector for OpenCVCellDetector {
         self.clean()?;
         let code = if bgr { COLOR_BGR2HSV_FULL } else { COLOR_RGB2HSV_FULL };
         cvt_color(
-            &bit_mat, 
+            &bit_mat,
             &mut self.temp_mat,
             code,
             0,
@@ -305,7 +298,7 @@ impl CellDetector for OpenCVCellDetector {
                 is_bad: area < 800.0 || area > 60000.0
             };
             clusters.push(cluster);
-        }    
+        }
         let mut cells: Vec<Rc<RefCell<Cell>>> = Vec::new();
         let imgbound = Rect::new(
             0,
@@ -333,7 +326,7 @@ impl CellDetector for OpenCVCellDetector {
                     // If what exists is significantly bigger, remove it and process this one
                     // else, don't consider our current
                     if distance_between(&clusters[i].center, &c2.center) < 12. {
-                        if c2.area >= 2.7 * clusters[i].area && contour.len() < 10  { 
+                        if c2.area >= 2.7 * clusters[i].area && contour.len() < 10  {
                             c2.is_fake = true;
                         } else {
                             break 'a true;
@@ -450,7 +443,6 @@ impl CellDetector for OpenCVCellDetector {
                     let closeby = rc.borrow();
                     if closeby.neighbors.len() != 1 || closeby.neighbors[0].borrow().is_fake || closeby.is_dot { continue }
                     points.push(closeby.center);
-                    drop(closeby);
                     rcs.push(rc);
                 };
                 let mut paired = vec![usize::MAX; points.len()];
@@ -468,6 +460,13 @@ impl CellDetector for OpenCVCellDetector {
                     Cell::add_neighbor(rcs[i], rcs[paired[i]]);
                 }
             }
+            // A cell with a bridge is split up into 3 parts. note that each of
+            // those 3 mini cells will have 4 neighbors. Additionally, note that
+            // the main cell will have 4 neighbors. Note that in terms of area,
+            // bottom > middle > top, and middle = 3 * (bottle + middle + top).
+            // If the left or right of the middle mini cell is about the same area,
+            // then both are not the pair we're looking for
+            // Can I use this??
         }
 
         let mut dot_registry = Vec::<(Vec3b, [(usize, Coordinates); 2])>::new();
@@ -555,7 +554,7 @@ impl CellDetector for OpenCVCellDetector {
             cells.len(),
             4 * cells.len()
         );
-        
+
         for cell in &cells {
             let cell = cell.borrow();
             if cell.is_fake { continue }

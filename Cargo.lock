@@ -594,7 +594,6 @@ dependencies = [
  "ndarray",
  "opencv",
  "petgraph",
- "rayon",
  "rustsat",
  "rustsat-glucose",
  "spin_sleep",
